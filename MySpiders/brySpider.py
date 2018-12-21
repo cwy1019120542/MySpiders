@@ -2,7 +2,7 @@ import time,re,pymysql,requests,json
 from pyquery import PyQuery as pq
 from apscheduler.schedulers.blocking import BlockingScheduler
 from datetime import datetime,timedelta
-db=pymysql.connect(host='localhost',db='bry_data',user='root',passwd='never1019120542,',charset='utf8')
+db=pymysql.connect(host='139.224.115.44',db='bryframe3',user='root',passwd='A9Vg+Dr*nP^fR=1V',charset='utf8')
 db.autocommit(True)
 cursor=db.cursor()
 headers={
@@ -77,11 +77,10 @@ def latest_spider():
 				print(url1)
 				mian_spider(url1,scode,tdate,sname)
 		break
-	db.close()
 	print('end')
 
 def delete_data():
-	last_year=(datetime.now()+timedelta(days=0)).strftime('%Y-%m-%d')
+	last_year=(datetime.now()+timedelta(days=-360)).strftime('%Y-%m-%d')
 	sql4='delete from lhb_data where date<"{}"'.format(last_year)
 	cursor.execute(sql4)
 	print('已删除{}以前的数据'.format(last_year))
@@ -100,12 +99,13 @@ def run_spider():
 			break
 		print('数据暂未刷新，等待10分钟')
 		time.sleep(600)
+	db.close()
 	print('{}号数据爬取完成'.format(today))
 
 if __name__ == '__main__':
 	#days30_spider()
 	scheduler=BlockingScheduler()
-	scheduler.add_job(func=run_spider,trigger='cron',hour='17',minute='10',second='*')
+	scheduler.add_job(func=run_spider,trigger='cron',hour='17',minute='22',second='10')
 	scheduler.start()
 
 
