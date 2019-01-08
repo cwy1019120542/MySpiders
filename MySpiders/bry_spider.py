@@ -319,7 +319,7 @@ def profession_report():
 		if is_end:
 			break
 	print('end:行业研报')
-profession_report()
+#profession_report()
 def spider_all():
 	print('--------------------开始爬取--------------------')
 	lhb_rank()
@@ -335,7 +335,7 @@ def spider_all():
 	print('--------------------爬取结束--------------------')
 if __name__ == '__main__':
 	scheduler=BlockingScheduler()
-	scheduler.add_job(func=spider_all,trigger='cron',hour='17',minute='10',second='10')
+	scheduler.add_job(func=spider_all,trigger='cron',hour='17',minute='0',second='10')
 	scheduler.start()
 
 
