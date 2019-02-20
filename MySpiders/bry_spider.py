@@ -2,7 +2,8 @@ import requests,json,pymysql,chardet,json,pymysql,time,demjson
 from pyquery import PyQuery as pq
 from datetime import datetime,timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
-db=pymysql.connect(host='139.224.115.44',user='root',passwd='A9Vg+Dr*nP^fR=1V',db='bryframe3',charset='utf8')
+db=pymysql.connect(host='47.102.40.81',user='root',passwd='Abc12345',db='bryframe',charset='utf8')
+#db=pymysql.connect(host='139.224.115.44',user='root',passwd='A9Vg+Dr*nP^fR=1V',db='bryframe',charset='utf8')
 db.autocommit(True)
 cursor=db.cursor()
 headers={
@@ -24,19 +25,27 @@ def lhb_rank():
 		month_day='{}月{}日'.format(today.strftime('%m'),today.strftime('%d'))
 		print(month_day)
 		if aim_date != month_day:
-			print('数据暂未刷新,等待5分钟')
-			time.sleep(300)
+			print('数据暂未刷新,等待一小时')
+			time.sleep(3600)
 		else:
 			break
 	date=today.strftime('%Y-%m-%d')
 	url1=r'http://data.eastmoney.com/DataCenter_V3/stock2016/TradeDetail/pagesize=200,page={0},sortRule=-1,sortType=,startDate={1},endDate={1},gpfw=0,js=var%20data_tab_1.html?rt=25754497'.format('{}',date)
-	#print(url1)
+	print(url1)
 	page=1
 	sql1='insert into lhb_rank (spider_date,up_date,code,name,close_price,up_down,buy_amount,change_rate,currency_market) values ("{}","{}","{}","{}",{},{},{},{},{})'
 	while True:
 		url2=url1.format(page)
 		#print(url2)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
+		#print(json_data)
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		if not data_lists:
@@ -69,7 +78,14 @@ def institution_business():
 	sql1='insert into institution_business (spider_date,up_date,code,name,buy_number,sell_number,buy_sum,sell_sum,buy_amount) values ("{}","{}","{}","{}",{},{},{},{},{})'
 	while True:
 		url2=url1.format(page)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		if not data_lists:
@@ -95,7 +111,14 @@ def stock_count():
 	while True:
 		print('第{}页'.format(page))
 		url2=url1.format(page)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		#print(data_lists)
@@ -123,7 +146,14 @@ def department_track():
 	while True:
 		print('第{}页'.format(page))
 		url2=url1.format(page)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		#print(data_lists)
@@ -157,7 +187,14 @@ def active_department():
 	sql1='insert into active_department (spider_date,up_date,name,buy_number,sell_number,buy_sum,sell_sum,business_amount,code,stock_name) values ("{}","{}","{}",{},{},{},{},{},"{}","{}")'
 	while True:
 		url2=url1.format(page)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		if not data_lists:
@@ -189,7 +226,14 @@ def department_count():
 	while True:
 		print('第{}页'.format(page))
 		url2=url1.format(page)
-		json_data=requests.get(url2,headers=headers).text.strip('var data_tab_0123456789=')
+		try:
+			json_html=requests.get(url2,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)["data"]
 		#print(data_lists)
@@ -210,11 +254,18 @@ def stock_info():
 	'''cursor.execute('delete from stock_info')
 	print('stock_info表已清空')'''
 	date=datetime.now().strftime('%Y-%m-%d')
-	sql1='insert into stock_info (code,name,spider_date,up_date,highest,lowest,yesterday,today) values ("{}","{}","{}","{}",{},{},{},{})'
+	sql1='insert into stock_info (code,name,spider_date,up_date,highest,lowest,today,yesterday) values ("{}","{}","{}","{}",{},{},{},{})'
 	for i in range(1,181):
 		print('第{}页'.format(i))
 		url1='http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?cb=jQuery11240974473783255319_1545290975192&type=CT&token=4f1862fc3b5e77c150a2b985b12db0fd&sty=FCOIATC&js=(%7Bdata%3A%5B(x)%5D%2CrecordsFiltered%3A(tot)%7D)&cmd=C._A&st=(ChangePercent)&sr=-1&p={}&ps=20&_=1545290975206'.format(i)
-		json_data=requests.get(url1,headers=headers).text.strip('jQuery0123456789_()')
+		try:
+			json_html=requests.get(url1,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:-1]
 		#print(json_data)
 		try:
 			data_lists=demjson.decode(json_data)['data']
@@ -223,7 +274,7 @@ def stock_info():
 		for data_str in data_lists:
 			data_str.replace('-','null')
 			data=data_str.split(',')
-			sql2=sql1.format(data[1],data[2],date,date,data[9],data[10],data[11],data[12])
+			sql2=sql1.format(data[1],data[2],date,date,to_null(data[9]),to_null(data[10]),to_null(data[11]),to_null(data[12]))
 			try:
 				cursor.execute(sql2)
 			except:
@@ -237,12 +288,22 @@ def stock_report():
 	sql2='select MAX(up_date) from stock_report'
 	cursor.execute(sql2)
 	latest_time=cursor.fetchone()[0]
-	latest_datetime=datetime(latest_time.year,latest_time.month,latest_time.day)
+	if not latest_time:
+		latest_datetime=datetime.now()-timedelta(days=1)
+	else:
+		latest_datetime=datetime(latest_time.year,latest_time.month,latest_time.day)
 	is_end=False
 	for i in range(1,254):
 		print('第{}页'.format(i))
 		url1=r'http://datainterface.eastmoney.com//EM_DataCenter/js.aspx?type=SR&sty=GGSR&js=var%20MILbIdwm={"data":[(x)],"pages":"(pc)","update":"(ud)","count":"(count)"}&ps=50&p='+str(i)+'&mkt=0&stat=0&cmd=2&code=&rt=51552935'
-		json_data=requests.get(url1,headers=headers).text.strip('var MILbIdwm=')
+		try:
+			json_html=requests.get(url1,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		for data in data_lists:
@@ -281,12 +342,22 @@ def profession_report():
 	sql2='select MAX(up_date) from profession_report'
 	cursor.execute(sql2)
 	latest_time=cursor.fetchone()[0]
-	latest_datetime=datetime(latest_time.year,latest_time.month,latest_time.day)
+	if not latest_time:
+		latest_datetime=datetime.now()-timedelta(days=1)
+	else:
+		latest_datetime=datetime(latest_time.year,latest_time.month,latest_time.day)
 	is_end=False
 	for i in range(1,1337):
 		print('第{}页'.format(i))
 		url1=r'http://datainterface.eastmoney.com//EM_DataCenter/js.aspx?type=SR&sty=HYSR&mkt=0&stat=0&cmd=4&code=&sc=&ps=50&p='+str(i)+'&js=var%20vMcgaFDg={%22data%22:[(x)],%22pages%22:%22(pc)%22,%22update%22:%22(ud)%22,%22count%22:%22(count)%22}&rt=51553086'
-		json_data=requests.get(url1,headers=headers).text.strip('=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM ')
+		try:
+			json_html=requests.get(url1,headers=headers).text
+		except:
+			print(f'请求第{page}页失败')
+			page+=1
+			continue
+		json_index=json_html.find('{')
+		json_data=json_html[json_index:]
 		#print(json_data)
 		data_lists=demjson.decode(json_data)['data']
 		for data in data_lists:
@@ -321,11 +392,21 @@ def profession_report():
 	print('end:行业研报')
 #profession_report()
 def spider_all():
+	q=pq(url=r'http://data.eastmoney.com/stock/tradedetail.html',encoding='gb2312')
+	aim_date=q('.cate_type_ul.cate_type_date .at').text()
+	while True:
+		today=datetime.now()
+		month_day='{}月{}日'.format(today.strftime('%m'),today.strftime('%d'))
+		print(month_day)
+		if aim_date != month_day:
+			return
+		else:
+			break
 	print('--------------------开始爬取--------------------')
-	lhb_rank()
-	institution_business()
-	stock_count()
-	department_track()
+	# lhb_rank()
+	# institution_business()
+	# stock_count()
+	# department_track()
 	active_department()
 	department_count()
 	stock_info()
@@ -333,9 +414,11 @@ def spider_all():
 	profession_report()
 	db.close()
 	print('--------------------爬取结束--------------------')
+spider_all()
 if __name__ == '__main__':
 	scheduler=BlockingScheduler()
-	scheduler.add_job(func=spider_all,trigger='cron',hour='17',minute='0',second='10')
+	print('正在等待。。。。')
+	scheduler.add_job(func=spider_all,trigger='cron',hour='17',minute='33',second='0')
 	scheduler.start()
 
 
