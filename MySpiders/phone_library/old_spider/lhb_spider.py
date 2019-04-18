@@ -1,8 +1,8 @@
 import sys
+sys.path.append(r'C:\Users\Administrator\Desktop\phone_library\old_spider')
 from datetime import datetime,timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
 import time
-sys.path.append(r'/root/bry_spider')
 from super_spider import SuperSpider
 def lhb_rank_spider():
 	lhb_rank=SuperSpider(host='47.102.40.81',passwd='Abc12345',db='bryframe',table_name='lhb_rank',field_list=('spider_date','up_date','code','name','close_price','up_down','buy_amount','change_rate','currency_market'))
@@ -159,6 +159,55 @@ def active_department_spider():
 	print('end：每日活跃营业部')
 #active_department_spider()
 
+def business_detail_spider():
+	stock_list=[]
+	business_detail=SuperSpider(host='47.102.40.81',passwd='Abc12345',db='bryframe',table_name='business_detail',field_list=('spider_date','up_date','code','name','department_name','amount'))
+	business_detail.up_date=business_detail.spider_date
+	page=1
+	while True:
+		try:
+			json_data=business_detail.use_requests_to_html(f'http://data.eastmoney.com/DataCenter_V3/stock2016/ActiveStatistics/pagesize=50,page={page},sortRule=-1,sortType=JmMoney,startDate={business_detail.spider_date},endDate={business_detail.spider_date},gpfw=0,js=var%20data_tab_1.html?rt=25861061','GB2312')
+			data_list=business_detail.json_to_py(json_data,deal=True)['data']
+		except:
+			print(f'第{page}页获取失败')
+			page+=1
+			continue
+		if not data_list or page == 500:
+			break
+		print(f'第{page}页')
+		for data in data_list:
+			if not data['SName']:
+				continue
+			stock_data_list=business_detail.json_to_py(data['SName'])
+			for stock_data in stock_data_list:
+				if stock_data['CodeName'] not in stock_list:
+					stock_list.append(stock_data['CodeName'])
+				else:
+					continue
+				business_detail.name=stock_data['CodeName']
+				business_detail.code=stock_data['SCode']
+				try:
+					url_code=business_detail.re_find(r'\d+',business_detail.code).__next__().group()
+				except:
+					continue
+				print(url_code)
+				url=f'http://data.eastmoney.com/stock/lhb,{business_detail.spider_date},{url_code}.html'
+				try:
+					business_detail.get_request(url)
+				except:
+					continue
+				detail_data_list=list(business_detail.data_search('find','table tbody td'))
+				for i,j in zip(range(1,71,7),range(6,71,7)):
+					try:
+						business_detail.department_name=detail_data_list[i].split('\n')[0]
+						business_detail.amount=detail_data_list[j]
+					except:
+						break
+					business_detail.data_save()
+					print(f'每日成交明细——{business_detail.up_date}——{business_detail.code}——{business_detail.name}——{business_detail.department_name}——导入完成')
+		page+=1
+	business_detail.spider_end()
+
 def department_count_spider():
 	department_count=SuperSpider(host='47.102.40.81',passwd='Abc12345',db='bryframe',table_name='department_count',field_list=('spider_date','up_date','name','list_time','buy_time','buy_sum','sell_time','sell_sum'))
 	month_ago=department_count.date_ago(30)
@@ -245,11 +294,11 @@ def stock_report_spider():
 			infocode=data['infoCode']
 			time2=time1.replace('-','')
 			try:
-				html1=stock_report.get_request(f'http://data.eastmoney.com/report/{time2}/{infocode}.html')
+				stock_report.get_request(f'http://data.eastmoney.com/report/{time2}/{infocode}.html')
 			except:
 				continue
 			report=''
-			for par in stock_report.data_search(html1,'find','#ContentBody .newsContent p'):
+			for par in stock_report.data_search('find','#ContentBody .newsContent p'):
 				report=report+par
 			stock_report.code=data['secuFullCode']
 			stock_report.name=data['secuName']
@@ -271,7 +320,7 @@ def stock_report_spider():
 #stock_report_spider()
 
 def profession_report_spider():
-	profession_report=SuperSpider(host='47.102.40.81',passwd='Abc12345',db='bryframe',table_name='profession_report',field_list=('name','spider_date','up_date','up_down','report','grade','grade_change','institution'))
+	profession_report=SuperSpider(table_name='profession_report',field_list=('name','spider_date','up_date','up_down','report','grade','grade_change','institution'))
 	sql1='select MAX(up_date) from profession_report'
 	latest_time=profession_report.sql_search(sql1)[0][0]
 	if not latest_time:
@@ -299,11 +348,11 @@ def profession_report_spider():
 			infocode=data[2]
 			time2=time1.replace('-','')
 			try:
-				html1=profession_report.get_request(f'http://data.eastmoney.com/report/{time2}/{infocode}.html')
+				profession_report.get_request(f'http://data.eastmoney.com/report/{time2}/{infocode}.html')
 			except:
 				continue
 			report=''
-			for par in profession_report.data_search(html1,'find','.newsContent p'):
+			for par in profession_report.data_search('find','.newsContent p'):
 				report=report+par
 			profession_report.name=data[10]
 			profession_report.up_date=time1
@@ -324,27 +373,28 @@ def run_all_spider():
 	while True:
 		now=datetime.now()
 		aim_date=f"{now.strftime('%m')}月{now.strftime('%d')}日"
-		html=run_all.get_request('http://data.eastmoney.com/stock/tradedetail.html')
-		data_date=run_all.data_search(html,'find','.cate_type_ul.cate_type_date .at').__next__()
+		run_all.get_request('http://data.eastmoney.com/stock/tradedetail.html')
+		data_date=run_all.data_search('find','.cate_type_ul.cate_type_date .at').__next__()
 		if aim_date != data_date:
 			print('————今日数据未更新————')
 			return
 		else:
 			break
-	lhb_rank_spider()
-	institution_business_spider()
-	stock_count_spider()
-	department_track_spider()
-	active_department_spider()
-	department_count_spider()
-	stock_info_spider()
-	stock_report_spider()
+	# lhb_rank_spider()
+	# institution_business_spider()
+	# stock_count_spider()
+	# department_track_spider()
+	# active_department_spider()
+	# business_detail_spider()
+	# department_count_spider()
+	# stock_info_spider()
+	# stock_report_spider()
 	profession_report_spider()
 	run_all.spider_end()
 
 if __name__ == '__main__':
-	#run_all_spider()
-	scheduler=BlockingScheduler()
-	print('正在等待~')
-	scheduler.add_job(func=run_all_spider,trigger='cron',hour='17',minute='0',second='0')
-	scheduler.start()
+	run_all_spider()
+	# scheduler=BlockingScheduler()
+	# print('正在等待~')
+	# scheduler.add_job(func=run_all_spider,trigger='cron',hour='17',minute='0',second='0')
+	# scheduler.start()
