@@ -2,13 +2,13 @@ from time import sleep
 from app_spider import AppSpider
 import requests
 import demjson
-def wx_spider(phone_number_list,search_wait_time):
+def wx_spider(phone_number_list,search_wait_time,code,passwd):
 	wx=AppSpider()
-	wx.open_app(desired_caps = {'platformName': 'Android','platformVersion': '5.1.1','deviceName': '127.0.0.1:62001','appPackage': 'com.tencent.mm','appActivity': 'com.tencent.mm.ui.LauncherUI'})
+	wx.open_app(desired_caps = {'platformName': 'Android','platformVersion': '5.1.1','deviceName': '127.0.0.1:62001','appPackage': 'com.tencent.mm','appActivity': 'com.tencent.mm.ui.LauncherUI','newCommandTimeout':600})
 	wx.xpath_click("//android.widget.Button[@text='登录']",time_sleep=3)
-	wx.xpath_input("//android.widget.EditText[@text='请填写手机号']",'17101558981')
+	wx.xpath_input("//android.widget.EditText[@text='请填写手机号']",code)
 	wx.xpath_click("//android.widget.Button[@text='下一步']",time_sleep=3)
-	wx.xpath_input("//android.widget.EditText",'ooo123456')
+	wx.xpath_input("//android.widget.EditText",passwd)
 	wx.xpath_click("//android.widget.Button[@text='登录']",time_sleep=5)
 	wx.xpath_click("//android.widget.Button[@text='是']",time_sleep=20)
 	wx.xpath_click("//android.widget.ImageView",index=-1)
@@ -26,14 +26,9 @@ def wx_spider(phone_number_list,search_wait_time):
 				wx.xpath_click(element=search_btn[0])
 				break		
 			else:
-				try:
-					wx.xpath_click("//android.widget.ImageView")
-				except Exception as error:
-					print(error)
-					wx.save_screenshot('error.png')
-					sleep(9999)
+				wx.xpath_click("//android.widget.ImageView")
 				wx.xpath_click(element=change_input)
-		none_element=wx.xpath_elements("//android.widget.TextView[@text='该用户不存在']")
+		none_element=wx.xpath_elements("//android.widget.TextView[@text='该用户不存在' or @text='被搜帐号状态异常，无法显示']")
 		end_element=wx.xpath_elements("//android.widget.TextView[@text='操作过于频繁，请稍后再试']")
 		if none_element:
 			data_dic={"phone_number":phone_number,"sex":"","is_useful":0}
@@ -51,7 +46,11 @@ def wx_spider(phone_number_list,search_wait_time):
 			else:
 				sex=''
 			data_dic={"phone_number":phone_number,"sex":sex,"is_useful":1}
-			wx.xpath_click(element=element_list[-1])
+			while True:
+				wx.xpath_click(element=element_list[-1])
+				search_input=wx.xpath_elements("//android.widget.EditText")
+				if search_input:
+					break
 		print(f'第{phone_id-start_id+1}次完成')
 		print(data_dic)
 		print(f'等待{search_wait_time}s......')
@@ -63,16 +62,20 @@ def get_phone_number(max_id,number):
 	data_list=demjson.decode(json_data)
 	return data_list
 
-def start():
-	data_list=get_phone_number(0,5000)
+def start(max_id,number,search_wait_time,code,passwd):
+	data_list=get_phone_number(max_id,number)
 	phone_number_list=((i['id'],i['mobile']) for i in data_list)
-	wx_spider(phone_number_list,search_wait_time=50)
-
-start()
+	wx_spider(phone_number_list,search_wait_time=search_wait_time,code=code,passwd=passwd)
 
 
+for code,passwd,search_wait_time in (('19965271486','jushuoniu',50),):
+	start(max_id=0,number=5000,search_wait_time=search_wait_time,code=code,passwd=passwd)
 
 
+#17101558981          ooo123456
+#19965270263          jsn123456
+#19965271486          jushuoniu
+#19965266164		
 	# while True:
 	# 	wx.xpath_click("//android.widget.TextView[@text='微信号/QQ号/手机号']")
 	# 	wx.xpath_input("//android.widget.EditText[@text='微信号/QQ号/手机号']","1")
