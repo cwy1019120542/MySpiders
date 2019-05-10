@@ -6,7 +6,7 @@ import random
 def wx_spider(phone_number_list,search_wait_time,code,passwd):
 	wx=AppSpider()
 	search_wait_time_list=search_wait_time
-	wx.open_app(appium_ip="http://127.0.0.1:4723/wd/hub",desired_caps = {'platformName': 'Android','platformVersion': '5.1.1','deviceName': '127.0.0.1:62001','appPackage': 'com.tencent.mm','appActivity': 'com.tencent.mm.ui.LauncherUI','newCommandTimeout':600,'udid':'127.0.0.1:62001'})
+	wx.open_app(appium_ip="http://127.0.0.1:4725/wd/hub",desired_caps = {'platformName': 'Android','platformVersion': '5.1.1','deviceName': '127.0.0.1:62025','appPackage': 'com.tencent.mm','appActivity': 'com.tencent.mm.ui.LauncherUI','newCommandTimeout':600,'udid':'127.0.0.1:62025'})
 	wx.xpath_click("//android.widget.Button[@text='登录']",time_sleep=3)
 	wx.xpath_input("//android.widget.EditText[@text='请填写手机号']",code)
 	wx.xpath_click("//android.widget.Button[@text='下一步']",time_sleep=3)

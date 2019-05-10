@@ -11,8 +11,8 @@ class AppSpider:
 	def __init__(self):
 		print('------start------')
 
-	def open_app(self,desired_caps,time_sleep=5):
-		self.dr = webdriver.Remote("http://127.0.0.1:4723/wd/hub", desired_caps)  # 连接Appium
+	def open_app(self,appium_ip,desired_caps,time_sleep=5):
+		self.dr = webdriver.Remote(appium_ip, desired_caps)  # 连接Appium
 		sleep(time_sleep)
 
 	def xpath_elements(self,xpath):
